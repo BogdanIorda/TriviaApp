@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -78,7 +79,6 @@ fun Questions(viewModel: QuestionsViewModel) {
     }
 }
 
-// TODO: We have a bug , if the answer is to long, we can't see the next line
 @Composable
 fun QuestionDisplay(
 
@@ -123,7 +123,7 @@ fun QuestionDisplay(
                     modifier = Modifier
                         .padding(8.dp)
                         .align(Alignment.Start)
-                        .fillMaxHeight(0.3f),
+                        .fillMaxHeight(0.15f),
                     color = AppColors.myOffWhite,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -135,8 +135,8 @@ fun QuestionDisplay(
                         modifier = Modifier
                             .padding(4.dp)
                             .fillMaxWidth()
-                            .height(50.dp)
-                            .clip(RoundedCornerShape(50))
+                            .defaultMinSize(minHeight = 50.dp)
+                            .clip(RoundedCornerShape(size = 50.dp))
                             .background(Color.Transparent)
                             .border(
                                 width = 4.dp, brush = Brush.linearGradient(
@@ -145,7 +145,7 @@ fun QuestionDisplay(
                                         AppColors.myOffDarkPurple
                                     )
                                 ),
-                                shape = RoundedCornerShape(25.dp)
+                                shape = RoundedCornerShape(50.dp)
                             ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -192,7 +192,7 @@ fun QuestionDisplay(
                         Text(
                             text = annotatedString,
                             modifier = Modifier
-                                .padding(8.dp)
+                                .padding(12.dp)
                         )
                     }
                 }
@@ -251,9 +251,6 @@ fun QuestionTracker(counter: Int, outOf: Int) {
     )
 }
 
-//TODO:Do the exercises at the end of this video: https://www.udemy.com/course/kotling-android-jetpack-compose-/learn/lecture/29429748#content
-
-//TODO: After you do the TODO from above , implement other functionalities to the app. There are a lot.
 @Composable
 fun DrawDottedLine(pathEffect: PathEffect) {
     androidx.compose.foundation.Canvas(
