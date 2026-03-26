@@ -112,7 +112,13 @@ fun QuestionDisplay(
             horizontalAlignment = Alignment.Start
         ) {
 
-            ShowProgress(questionIndex.value)
+            ShowProgress(
+                score = if (correctAnswerState == true) {
+                    questionIndex.value
+                } else questionIndex.value - 1
+            )
+
+
 
 
             QuestionTracker(questionIndex.value + 1, viewModel.getTotalQuestionCount())
@@ -251,9 +257,6 @@ fun QuestionTracker(counter: Int, outOf: Int) {
     )
 }
 
-//TODO:Do the exercises at the end of this video: https://www.udemy.com/course/kotling-android-jetpack-compose-/learn/lecture/29429748#content
-
-//TODO: After you do the TODO from above , implement other functionalities to the app. There are a lot.
 @Composable
 fun DrawDottedLine(pathEffect: PathEffect) {
     androidx.compose.foundation.Canvas(
@@ -320,7 +323,7 @@ fun ShowProgress(score: Int) {
         )
 
         Text(
-            text = (score).toString(),
+            text = (score + 1).toString(),
             modifier = Modifier
                 .fillMaxWidth(),
             textAlign = TextAlign.Center,
