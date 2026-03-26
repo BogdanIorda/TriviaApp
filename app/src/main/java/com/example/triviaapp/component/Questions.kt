@@ -71,10 +71,17 @@ fun Questions(viewModel: QuestionsViewModel) {
             QuestionDisplay(
                 question = question!!,
                 questionIndex = questionIndex,
-                viewModel = viewModel
-            ) {
-                questionIndex.intValue++
-            }
+                viewModel = viewModel,
+                onNextClicked = {
+                    questionIndex.intValue++
+                },
+                onBackClicked = {
+                    if (questionIndex.intValue > 0) {
+                        questionIndex.intValue--
+                    }
+                }
+
+            )
         }
     }
 }
@@ -85,20 +92,37 @@ fun QuestionDisplay(
     question: QuestionItem,
     questionIndex: MutableState<Int>,
     viewModel: QuestionsViewModel,
-    onNextClicked: (Int) -> Unit = {}
+    onNextClicked: (Int) -> Unit = {},
+    onBackClicked: (Int) -> Unit = {}
 ) {
 
     val choicesState = remember(question) { question.choices.toMutableList() }
-    var answerIndexState by remember(question) { mutableStateOf<Int?>(null) }
-    var correctAnswerState by remember(question) { mutableStateOf<Boolean?>(null) }
+
+    var selectedAnswerIndexState by remember(question) {
+        mutableStateOf<Int?>(
+            viewModel.getAnswerFromHistory(
+                questionIndex.value
+            )
+        )
+    }
+
+    var correctAnswerState by remember(question) {
+        mutableStateOf<Boolean?>(
+            if (selectedAnswerIndexState != null) {
+                choicesState[selectedAnswerIndexState!!] == question.answer
+            } else null
+        )
+    }
+
     var score by remember { mutableIntStateOf(0) }
 
-    val updateAnswer: (Int) -> Unit = remember(question) {
-        { index ->
-            if (answerIndexState == null) {
-                answerIndexState = index
-                correctAnswerState = choicesState[index] == question.answer
 
+    val updateAnswer: (Int) -> Unit = remember(question) {
+        { tappedAnswerIndex ->
+            if (selectedAnswerIndexState == null) {
+                selectedAnswerIndexState = tappedAnswerIndex
+                viewModel.saveAnswerToHistory(questionIndex.value, tappedAnswerIndex)
+                correctAnswerState = choicesState[tappedAnswerIndex] == question.answer
 
                 if (correctAnswerState == true) {
                     score += 1
@@ -161,7 +185,7 @@ fun QuestionDisplay(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = (answerIndexState == index),
+                            selected = (selectedAnswerIndexState == index),
                             onClick = {
                                 updateAnswer(index)
                             },
@@ -182,15 +206,15 @@ fun QuestionDisplay(
                                     fontWeight = FontWeight.Light,
                                     color =
                                         when (correctAnswerState) {
-                                            true if index == answerIndexState -> {
+                                            true if index == selectedAnswerIndexState -> {
                                                 Color.Green
                                             }
 
-                                            false if index == answerIndexState -> {
+                                            false if index == selectedAnswerIndexState -> {
                                                 Color.Red
                                             }
 
-                                            false if answerText == question.answer && index != answerIndexState -> {
+                                            false if answerText == question.answer && index != selectedAnswerIndexState -> {
                                                 Color.Green
                                             }
 
@@ -211,23 +235,43 @@ fun QuestionDisplay(
                         )
                     }
                 }
-                Button(
-                    onClick = { onNextClicked(questionIndex.value) },
+                Row(
                     modifier = Modifier
-                        .padding(top = 30.dp)
-                        .align(alignment = Alignment.CenterHorizontally),
-
-                    shape = RoundedCornerShape(33.dp),
-                    colors = ButtonDefaults.buttonColors(AppColors.myLightBlue)
-                )
-                {
-                    Text(
-                        text = "Next",
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(
+                        onClick = { onBackClicked(questionIndex.value) },
                         modifier = Modifier
-                            .padding(4.dp),
-                        color = AppColors.myOffWhite,
-                        fontSize = 18.sp
+                            .padding(top = 30.dp),
+                        shape = RoundedCornerShape(33.dp),
+                        colors = ButtonDefaults.buttonColors(AppColors.myLightBlue)
                     )
+                    {
+                        Text(
+                            text = "Back",
+                            modifier = Modifier
+                                .padding(4.dp),
+                            color = AppColors.myOffWhite,
+                            fontSize = 18.sp
+                        )
+                    }
+                    Button(
+                        onClick = { onNextClicked(questionIndex.value) },
+                        modifier = Modifier
+                            .padding(top = 30.dp),
+                        shape = RoundedCornerShape(33.dp),
+                        colors = ButtonDefaults.buttonColors(AppColors.myLightBlue)
+                    )
+                    {
+                        Text(
+                            text = "Next",
+                            modifier = Modifier
+                                .padding(4.dp),
+                            color = AppColors.myOffWhite,
+                            fontSize = 18.sp
+                        )
+                    }
                 }
             }
 
@@ -272,16 +316,15 @@ fun DrawDottedLine(pathEffect: PathEffect) {
     androidx.compose.foundation.Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(1.dp),
-        {
-            drawLine(
-                color = AppColors.myLightGray,
-                start = Offset(0f, 0f),
-                end = Offset(size.width, 0f),
-                pathEffect = pathEffect
-            )
-        }
-    )
+            .height(1.dp)
+    ) {
+        drawLine(
+            color = AppColors.myLightGray,
+            start = Offset(0f, 0f),
+            end = Offset(size.width, 0f),
+            pathEffect = pathEffect
+        )
+    }
 }
 
 
@@ -296,7 +339,7 @@ fun ShowProgress(score: Int) {
     )
 
     val progressFactor by remember(score) {
-        mutableFloatStateOf(score * 0.020f)
+        mutableFloatStateOf(score * 0.02f)
     }
 
     Box(
@@ -333,7 +376,7 @@ fun ShowProgress(score: Int) {
         )
 
         Text(
-            text = (score).toString(),
+            text = "Score: $score",
             modifier = Modifier
                 .fillMaxWidth(),
             textAlign = TextAlign.Center,

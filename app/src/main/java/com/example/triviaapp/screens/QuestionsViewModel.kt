@@ -19,6 +19,8 @@ class QuestionsViewModel @Inject constructor(private val repository: QuestionRep
             DataOrException(null, true, Exception(""))
         )
 
+    private val answerHistory = mutableMapOf<Int, Int>()
+
     init {
         getAllQuestions()
     }
@@ -38,6 +40,14 @@ class QuestionsViewModel @Inject constructor(private val repository: QuestionRep
 
     fun getTotalQuestionCount(): Int {
         return data.value.data!!.toMutableList().size
+    }
+
+    fun saveAnswerToHistory(questionIndex: Int, answerIndex: Int) {
+        answerHistory[questionIndex] = answerIndex
+    }
+
+    fun getAnswerFromHistory(questionIndex: Int): Int? {
+        return answerHistory[questionIndex]
     }
 }
 
