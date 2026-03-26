@@ -89,14 +89,14 @@ fun QuestionDisplay(
 ) {
 
     val choicesState = remember(question) { question.choices.toMutableList() }
-    var answerState by remember(question) { mutableStateOf<Int?>(null) }
+    var answerIndexState by remember(question) { mutableStateOf<Int?>(null) }
     var correctAnswerState by remember(question) { mutableStateOf<Boolean?>(null) }
     var score by remember { mutableIntStateOf(0) }
 
     val updateAnswer: (Int) -> Unit = remember(question) {
         { index ->
-            if (answerState == null) {
-                answerState = index
+            if (answerIndexState == null) {
+                answerIndexState = index
                 correctAnswerState = choicesState[index] == question.answer
 
 
@@ -161,7 +161,7 @@ fun QuestionDisplay(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = (answerState == index),
+                            selected = (answerIndexState == index),
                             onClick = {
                                 updateAnswer(index)
                             },
@@ -182,12 +182,16 @@ fun QuestionDisplay(
                                     fontWeight = FontWeight.Light,
                                     color =
                                         when (correctAnswerState) {
-                                            true if index == answerState -> {
+                                            true if index == answerIndexState -> {
                                                 Color.Green
                                             }
 
-                                            false if index == answerState -> {
+                                            false if index == answerIndexState -> {
                                                 Color.Red
+                                            }
+
+                                            false if answerText == question.answer && index != answerIndexState -> {
+                                                Color.Green
                                             }
 
                                             else -> {
