@@ -55,7 +55,7 @@ import com.example.triviaapp.util.AppColors
 fun Questions(viewModel: QuestionsViewModel) {
 
     val questions = viewModel.data.value.data?.toMutableList()
-    val questionIndex = remember(questions) { mutableIntStateOf(4874) }
+    val questionIndex = remember(questions) { mutableIntStateOf(0) }
     val score = remember { mutableIntStateOf(0) }
     val isGameOver = remember { mutableStateOf(false) }
     val gameAttempt = remember { mutableIntStateOf(1) }
