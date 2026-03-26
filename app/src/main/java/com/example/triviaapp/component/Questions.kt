@@ -1,5 +1,6 @@
 package com.example.triviaapp.component
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,6 +37,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -83,6 +86,10 @@ fun Questions(viewModel: QuestionsViewModel) {
                     if (questionIndex.intValue > 0) {
                         questionIndex.intValue--
                     }
+                },
+                onNewGameClicked = {
+                    questionIndex.intValue = 0
+                    viewModel.clearMemoryBank()
                 }
             )
         }
@@ -96,8 +103,12 @@ fun QuestionDisplay(
     questionIndex: MutableState<Int>,
     viewModel: QuestionsViewModel,
     onNextClicked: (Int) -> Unit = {},
-    onBackClicked: (Int) -> Unit = {}
+    onBackClicked: (Int) -> Unit = {},
+    onNewGameClicked: () -> Unit = {}
 ) {
+
+    val context = LocalContext.current
+    val newGamePopUpShowing = remember { mutableStateOf(false) }
 
     val choicesState = remember(question) { question.choices.toMutableList() }
 
@@ -159,9 +170,8 @@ fun QuestionDisplay(
                 Text(
                     text = question.question,
                     modifier = Modifier
-                        .padding(8.dp)
-                        .align(Alignment.Start)
-                        .fillMaxHeight(0.15f),
+                        .padding(10.dp)
+                        .align(Alignment.Start),
                     color = AppColors.myOffWhite,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -246,7 +256,7 @@ fun QuestionDisplay(
                     Button(
                         onClick = { onBackClicked(questionIndex.value) },
                         modifier = Modifier
-                            .padding(top = 30.dp),
+                            .padding(top = 20.dp),
                         shape = RoundedCornerShape(33.dp),
                         colors = ButtonDefaults.buttonColors(AppColors.myLightBlue)
                     )
@@ -262,7 +272,7 @@ fun QuestionDisplay(
                     Button(
                         onClick = { onNextClicked(questionIndex.value) },
                         modifier = Modifier
-                            .padding(top = 30.dp),
+                            .padding(top = 20.dp),
                         shape = RoundedCornerShape(33.dp),
                         colors = ButtonDefaults.buttonColors(AppColors.myLightBlue)
                     )
@@ -275,6 +285,58 @@ fun QuestionDisplay(
                             fontSize = 18.sp
                         )
                     }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Button(
+                        onClick = {
+//                            score = 0
+//                            onNewGameClicked()
+                            newGamePopUpShowing.value = true
+                        },
+                        modifier = Modifier
+                            .padding(top = 10.dp),
+                        shape = RoundedCornerShape(33.dp),
+                        colors = ButtonDefaults.buttonColors(AppColors.myBlue)
+                    ) {
+                        Text(
+                            text = "NewGame",
+                            modifier = Modifier
+                                .padding(4.dp),
+                            color = AppColors.myOffWhite
+                        )
+                    }
+
+                    if (newGamePopUpShowing.value)
+                        AlertDialog(
+                            onDismissRequest = { newGamePopUpShowing.value = false },
+                            title = { Text(text = "Are you sure?") },
+                            text = { Text(text = "All your progress will be lost.") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        onNewGameClicked()
+                                        score = 0
+                                        Toast.makeText(
+                                            context,
+                                            "Welcome to a New Game",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        newGamePopUpShowing.value = false
+                                    }
+                                ) { Text("Yes") }
+                            },
+                            dismissButton = {
+                                Button(onClick = {
+                                    newGamePopUpShowing.value = false
+                                }) { Text("No") }
+                            }
+
+                        )
                 }
             }
         }

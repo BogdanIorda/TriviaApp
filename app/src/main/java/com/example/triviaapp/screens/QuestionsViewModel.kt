@@ -49,6 +49,10 @@ class QuestionsViewModel @Inject constructor(private val repository: QuestionRep
     fun getAnswerFromHistory(questionIndex: Int): Int? {
         return answerHistory[questionIndex]
     }
+
+    fun clearMemoryBank() {
+        answerHistory.clear()
+    }
 }
 
 
