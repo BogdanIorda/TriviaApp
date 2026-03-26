@@ -91,11 +91,23 @@ fun QuestionDisplay(
     val choicesState = remember(question) { question.choices.toMutableList() }
     var answerState by remember(question) { mutableStateOf<Int?>(null) }
     var correctAnswerState by remember(question) { mutableStateOf<Boolean?>(null) }
+    var score by remember { mutableIntStateOf(0) }
 
     val updateAnswer: (Int) -> Unit = remember(question) {
         { index ->
-            answerState = index
-            correctAnswerState = choicesState[index] == question.answer
+            if (answerState == null) {
+                answerState = index
+                correctAnswerState = choicesState[index] == question.answer
+
+
+                if (correctAnswerState == true) {
+                    score += 1
+                } else {
+                    if (score > 0) {
+                        score -= 1
+                    }
+                }
+            }
         }
     }
 
@@ -112,14 +124,7 @@ fun QuestionDisplay(
             horizontalAlignment = Alignment.Start
         ) {
 
-            ShowProgress(
-                score = if (correctAnswerState == true) {
-                    questionIndex.value
-                } else questionIndex.value - 1
-            )
-
-
-
+            ShowProgress(score)
 
             QuestionTracker(questionIndex.value + 1, viewModel.getTotalQuestionCount())
             DrawDottedLine(pathStyle)
@@ -257,6 +262,7 @@ fun QuestionTracker(counter: Int, outOf: Int) {
     )
 }
 
+
 @Composable
 fun DrawDottedLine(pathEffect: PathEffect) {
     androidx.compose.foundation.Canvas(
@@ -286,7 +292,7 @@ fun ShowProgress(score: Int) {
     )
 
     val progressFactor by remember(score) {
-        mutableFloatStateOf(score * 0.005f)
+        mutableFloatStateOf(score * 0.020f)
     }
 
     Box(
@@ -323,7 +329,7 @@ fun ShowProgress(score: Int) {
         )
 
         Text(
-            text = (score + 1).toString(),
+            text = (score).toString(),
             modifier = Modifier
                 .fillMaxWidth(),
             textAlign = TextAlign.Center,
