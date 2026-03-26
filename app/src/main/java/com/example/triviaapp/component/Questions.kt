@@ -54,10 +54,11 @@ import com.example.triviaapp.util.AppColors
 @Composable
 fun Questions(viewModel: QuestionsViewModel) {
 
-
     val questions = viewModel.data.value.data?.toMutableList()
-    val questionIndex = remember(questions) { mutableIntStateOf(0) }
-
+    val questionIndex = remember(questions) { mutableIntStateOf(4874) }
+    val score = remember { mutableIntStateOf(0) }
+    val isGameOver = remember { mutableStateOf(false) }
+    val gameAttempt = remember { mutableIntStateOf(1) }
 
     if (viewModel.data.value.loading == true) {
 
@@ -73,35 +74,56 @@ fun Questions(viewModel: QuestionsViewModel) {
         } catch (e: Exception) {
             null
         }
-
-        if (questions != null) {
-            QuestionDisplay(
-                question = question!!,
-                questionIndex = questionIndex,
-                viewModel = viewModel,
-                onNextClicked = {
-                    questionIndex.intValue++
-                },
-                onBackClicked = {
-                    if (questionIndex.intValue > 0) {
-                        questionIndex.intValue--
-                    }
-                },
+        if (isGameOver.value) {
+            GameOver(
+                score.intValue,
                 onNewGameClicked = {
+                    score.intValue = 0
                     questionIndex.intValue = 0
                     viewModel.clearMemoryBank()
+                    isGameOver.value = false
+                    gameAttempt.intValue++ // just in case we change the GameOver composable
                 }
             )
+        } else {
+            if (questions != null) {
+                QuestionDisplay(
+                    score = score,
+                    question = question!!,
+                    questionIndex = questionIndex,
+                    viewModel = viewModel,
+                    gameAttempt = gameAttempt,
+                    onNextClicked = {
+                        if (questionIndex.intValue < viewModel.getTotalQuestionCount() - 1) {
+                            questionIndex.intValue++
+                        } else {
+                            isGameOver.value = true
+                        }
+
+                    },
+                    onBackClicked = {
+                        if (questionIndex.intValue > 0) {
+                            questionIndex.intValue--
+                        }
+                    },
+                    onNewGameClicked = {
+
+                        questionIndex.intValue = 0
+                        viewModel.clearMemoryBank()
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
 fun QuestionDisplay(
-
+    score: MutableState<Int>,
     question: QuestionItem,
     questionIndex: MutableState<Int>,
     viewModel: QuestionsViewModel,
+    gameAttempt: MutableState<Int>,
     onNextClicked: (Int) -> Unit = {},
     onBackClicked: (Int) -> Unit = {},
     onNewGameClicked: () -> Unit = {}
@@ -112,7 +134,7 @@ fun QuestionDisplay(
 
     val choicesState = remember(question) { question.choices.toMutableList() }
 
-    var selectedAnswerIndexState by remember(question) {
+    var selectedAnswerIndexState by remember(question, gameAttempt.value) {
         mutableStateOf(
             viewModel.getAnswerFromHistory(
                 questionIndex.value
@@ -120,7 +142,7 @@ fun QuestionDisplay(
         )
     }
 
-    var correctAnswerState by remember(question) {
+    var correctAnswerState by remember(question, gameAttempt.value) {
         mutableStateOf(
             if (selectedAnswerIndexState != null) {
                 choicesState[selectedAnswerIndexState!!] == question.answer
@@ -128,10 +150,7 @@ fun QuestionDisplay(
         )
     }
 
-    var score by remember { mutableIntStateOf(0) }
-
-
-    val updateAnswer: (Int) -> Unit = remember(question) {
+    val updateAnswer: (Int) -> Unit = remember(question, gameAttempt.value) {
         { tappedAnswerIndex ->
             if (selectedAnswerIndexState == null) {
                 selectedAnswerIndexState = tappedAnswerIndex
@@ -139,10 +158,10 @@ fun QuestionDisplay(
                 correctAnswerState = choicesState[tappedAnswerIndex] == question.answer
 
                 if (correctAnswerState == true) {
-                    score += 1
+                    score.value += 1
                 } else {
-                    if (score > 0) {
-                        score -= 1
+                    if (score.value > 0) {
+                        score.value -= 1
                     }
                 }
             }
@@ -162,7 +181,7 @@ fun QuestionDisplay(
             horizontalAlignment = Alignment.Start
         ) {
 
-            ShowProgress(score)
+            ShowProgress(score.value)
 
             QuestionTracker(questionIndex.value + 1, viewModel.getTotalQuestionCount())
             DrawDottedLine(pathStyle)
@@ -294,8 +313,6 @@ fun QuestionDisplay(
 
                     Button(
                         onClick = {
-//                            score = 0
-//                            onNewGameClicked()
                             newGamePopUpShowing.value = true
                         },
                         modifier = Modifier
@@ -311,7 +328,7 @@ fun QuestionDisplay(
                         )
                     }
 
-                    if (newGamePopUpShowing.value)
+                    if (newGamePopUpShowing.value) {
                         AlertDialog(
                             onDismissRequest = { newGamePopUpShowing.value = false },
                             title = { Text(text = "Are you sure?") },
@@ -320,13 +337,14 @@ fun QuestionDisplay(
                                 Button(
                                     onClick = {
                                         onNewGameClicked()
-                                        score = 0
+                                        score.value = 0
                                         Toast.makeText(
                                             context,
                                             "Welcome to a New Game",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                         newGamePopUpShowing.value = false
+                                        gameAttempt.value++
                                     }
                                 ) { Text("Yes") }
                             },
@@ -337,6 +355,7 @@ fun QuestionDisplay(
                             }
 
                         )
+                    }
                 }
             }
         }
@@ -449,7 +468,50 @@ fun ShowProgress(score: Int) {
     }
 }
 
+@Composable
+fun GameOver(score: Int, onNewGameClicked: () -> Unit = {}) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Game Over",
+                fontSize = 40.sp
+            )
+            Text(
+                text = "You final score is: $score",
+                fontSize = 20.sp
+            )
 
+            Button(
+                onClick = {
+                    onNewGameClicked()
+                    Toast.makeText(
+                        context,
+                        "Welcome to a New Game",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                modifier = Modifier
+                    .padding(top = 10.dp),
+                shape = RoundedCornerShape(33.dp),
+                colors = ButtonDefaults.buttonColors(AppColors.myBlue)
+            ) {
+                Text(
+                    text = "NewGame",
+                    modifier = Modifier
+                        .padding(4.dp),
+                    color = AppColors.myOffWhite
+                )
+            }
+        }
+    }
+}
 
 
 
