@@ -26,7 +26,9 @@ class QuestionsViewModel @Inject constructor(private val repository: QuestionRep
     private fun getAllQuestions() {
         viewModelScope.launch {
             data.value.loading = true
-            data.value = repository.getAllQuestions()
+            val response = repository.getAllQuestions()
+            response.data?.shuffle()
+            data.value = response
             if (data.value.data.toString().isNotEmpty()) {
                 data.value.loading = false
             }

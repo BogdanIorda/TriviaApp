@@ -251,6 +251,9 @@ fun QuestionTracker(counter: Int, outOf: Int) {
     )
 }
 
+//TODO:Do the exercises at the end of this video: https://www.udemy.com/course/kotling-android-jetpack-compose-/learn/lecture/29429748#content
+
+//TODO: After you do the TODO from above , implement other functionalities to the app. There are a lot.
 @Composable
 fun DrawDottedLine(pathEffect: PathEffect) {
     androidx.compose.foundation.Canvas(
