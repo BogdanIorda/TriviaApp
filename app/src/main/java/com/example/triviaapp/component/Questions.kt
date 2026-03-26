@@ -58,7 +58,11 @@ fun Questions(viewModel: QuestionsViewModel) {
 
     if (viewModel.data.value.loading == true) {
 
-        CircularProgressIndicator()
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) { CircularProgressIndicator() }
 
     } else {
         val question = try {
@@ -80,7 +84,6 @@ fun Questions(viewModel: QuestionsViewModel) {
                         questionIndex.intValue--
                     }
                 }
-
             )
         }
     }
@@ -99,7 +102,7 @@ fun QuestionDisplay(
     val choicesState = remember(question) { question.choices.toMutableList() }
 
     var selectedAnswerIndexState by remember(question) {
-        mutableStateOf<Int?>(
+        mutableStateOf(
             viewModel.getAnswerFromHistory(
                 questionIndex.value
             )
@@ -107,7 +110,7 @@ fun QuestionDisplay(
     }
 
     var correctAnswerState by remember(question) {
-        mutableStateOf<Boolean?>(
+        mutableStateOf(
             if (selectedAnswerIndexState != null) {
                 choicesState[selectedAnswerIndexState!!] == question.answer
             } else null
@@ -274,7 +277,6 @@ fun QuestionDisplay(
                     }
                 }
             }
-
         }
     }
 }
