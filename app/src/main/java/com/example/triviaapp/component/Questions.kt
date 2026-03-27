@@ -138,9 +138,7 @@ fun QuestionDisplay(
 ) {
 
     val context = LocalContext.current
-
     val newGamePopUpShowing = remember { mutableStateOf(false) }
-
     val choicesState = remember(question) { question.choices.toMutableList() }
 
     var selectedAnswerIndexState by remember(question, gameAttempt.value) {
@@ -431,8 +429,8 @@ fun ShowProgress(score: Int, streakCount: MutableState<Int>, outOf: Int) {
 
     val flame = when (streakCount.value) {
         in 3..6 -> "🔥"
-        in 7..10 -> "🔥🔥"
-        in 11..<outOf -> "🔥🔥🔥"
+        in 6..9 -> "🔥🔥"
+        in 10..<outOf -> "🔥🔥🔥"
         else -> ""
     }
     val gradient = Brush.linearGradient(
