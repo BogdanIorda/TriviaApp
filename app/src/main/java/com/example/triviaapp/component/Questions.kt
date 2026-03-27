@@ -54,7 +54,7 @@ import com.example.triviaapp.util.AppColors
 fun Questions(viewModel: QuestionsViewModel) {
 
     val questions = viewModel.data.value.data?.toMutableList()
-    val questionIndex = remember(questions) { mutableIntStateOf(4874) }
+    val questionIndex = remember(questions) { mutableIntStateOf(0) }
     val score = remember { mutableIntStateOf(0) }
     val isGameOver = remember { mutableStateOf(false) }
     val gameAttempt = remember { mutableIntStateOf(1) }
@@ -102,6 +102,7 @@ fun Questions(viewModel: QuestionsViewModel) {
                             questionIndex.intValue++
                         } else {
                             isGameOver.value = true
+                            //TODO: Ask ai how to make so the app wont allow screen turn
                         }
 
                     },
