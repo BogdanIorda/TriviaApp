@@ -42,7 +42,6 @@ import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -55,10 +54,11 @@ import com.example.triviaapp.util.AppColors
 fun Questions(viewModel: QuestionsViewModel) {
 
     val questions = viewModel.data.value.data?.toMutableList()
-    val questionIndex = remember(questions) { mutableIntStateOf(0) }
+    val questionIndex = remember(questions) { mutableIntStateOf(4874) }
     val score = remember { mutableIntStateOf(0) }
     val isGameOver = remember { mutableStateOf(false) }
     val gameAttempt = remember { mutableIntStateOf(1) }
+    val streakCount = remember { mutableIntStateOf(0) }
 
     if (viewModel.data.value.loading == true) {
 
@@ -66,7 +66,9 @@ fun Questions(viewModel: QuestionsViewModel) {
             modifier = Modifier
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
-        ) { CircularProgressIndicator() }
+        ) {
+            CircularProgressIndicator()
+        }
 
     } else {
         val question = try {
@@ -83,6 +85,7 @@ fun Questions(viewModel: QuestionsViewModel) {
                     viewModel.clearMemoryBank()
                     isGameOver.value = false
                     gameAttempt.intValue++ // just in case we change the GameOver composable
+                    streakCount.intValue = 0
                 }
             )
         } else {
@@ -93,6 +96,7 @@ fun Questions(viewModel: QuestionsViewModel) {
                     questionIndex = questionIndex,
                     viewModel = viewModel,
                     gameAttempt = gameAttempt,
+                    streakCount = streakCount,
                     onNextClicked = {
                         if (questionIndex.intValue < viewModel.getTotalQuestionCount() - 1) {
                             questionIndex.intValue++
@@ -107,9 +111,11 @@ fun Questions(viewModel: QuestionsViewModel) {
                         }
                     },
                     onNewGameClicked = {
-
+                        score.intValue = 0
                         questionIndex.intValue = 0
                         viewModel.clearMemoryBank()
+                        streakCount.intValue = 0
+                        gameAttempt.intValue++
                     }
                 )
             }
@@ -124,12 +130,14 @@ fun QuestionDisplay(
     questionIndex: MutableState<Int>,
     viewModel: QuestionsViewModel,
     gameAttempt: MutableState<Int>,
+    streakCount: MutableState<Int>,
     onNextClicked: (Int) -> Unit = {},
     onBackClicked: (Int) -> Unit = {},
     onNewGameClicked: () -> Unit = {}
 ) {
 
     val context = LocalContext.current
+
     val newGamePopUpShowing = remember { mutableStateOf(false) }
 
     val choicesState = remember(question) { question.choices.toMutableList() }
@@ -158,8 +166,16 @@ fun QuestionDisplay(
                 correctAnswerState = choicesState[tappedAnswerIndex] == question.answer
 
                 if (correctAnswerState == true) {
-                    score.value += 1
+                    streakCount.value += 1
+                    when (streakCount.value) {
+                        in 3..6 -> score.value += 2
+                        in 7..10 -> score.value += 3
+                        in 11..111 -> score.value += 5
+                        else -> score.value += 1
+                    }
+
                 } else {
+                    streakCount.value = 0
                     if (score.value > 0) {
                         score.value -= 1
                     }
@@ -181,7 +197,7 @@ fun QuestionDisplay(
             horizontalAlignment = Alignment.Start
         ) {
 
-            ShowProgress(score.value)
+            ShowProgress(score.value, streakCount = streakCount, viewModel.getTotalQuestionCount())
 
             QuestionTracker(questionIndex.value + 1, viewModel.getTotalQuestionCount())
             DrawDottedLine(pathStyle)
@@ -277,7 +293,8 @@ fun QuestionDisplay(
                         modifier = Modifier
                             .padding(top = 20.dp),
                         shape = RoundedCornerShape(33.dp),
-                        colors = ButtonDefaults.buttonColors(AppColors.myLightBlue)
+                        colors = ButtonDefaults.buttonColors(AppColors.myLightBlue),
+                        enabled = questionIndex.value > 0
                     )
                     {
                         Text(
@@ -310,7 +327,6 @@ fun QuestionDisplay(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-
                     Button(
                         onClick = {
                             newGamePopUpShowing.value = true
@@ -337,14 +353,12 @@ fun QuestionDisplay(
                                 Button(
                                     onClick = {
                                         onNewGameClicked()
-                                        score.value = 0
                                         Toast.makeText(
                                             context,
                                             "Welcome to a New Game",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                         newGamePopUpShowing.value = false
-                                        gameAttempt.value++
                                     }
                                 ) { Text("Yes") }
                             },
@@ -412,8 +426,14 @@ fun DrawDottedLine(pathEffect: PathEffect) {
 
 
 @Composable
-fun ShowProgress(score: Int) {
+fun ShowProgress(score: Int, streakCount: MutableState<Int>, outOf: Int) {
 
+    val flame = when (streakCount.value) {
+        in 3..6 -> "🔥"
+        in 7..10 -> "🔥🔥"
+        in 11..<outOf -> "🔥🔥🔥"
+        else -> ""
+    }
     val gradient = Brush.linearGradient(
         listOf(
             Color(0xFFF95075),
@@ -422,7 +442,7 @@ fun ShowProgress(score: Int) {
     )
 
     val progressFactor by remember(score) {
-        mutableFloatStateOf(score * 0.02f)
+        mutableFloatStateOf(score * 0.01f)
     }
 
     Box(
@@ -458,13 +478,23 @@ fun ShowProgress(score: Int) {
                 .background(brush = gradient)
         )
 
-        Text(
-            text = "Score: $score",
+        Row(
             modifier = Modifier
+                .padding(4.dp)
                 .fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            color = AppColors.myOffWhite
+            horizontalArrangement = Arrangement.SpaceEvenly
         )
+        {
+            Text(
+                text = "Score: $score",
+                color = AppColors.myOffWhite
+            )
+
+            Text(
+                text = "Streak: ${streakCount.value}$flame",
+                color = AppColors.myOffWhite
+            )
+        }
     }
 }
 
