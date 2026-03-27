@@ -171,7 +171,7 @@ fun QuestionDisplay(
                     when (streakCount.value) {
                         in 4..6 -> score.value += 2
                         in 7..10 -> score.value += 3
-                        in 11..111 -> score.value += 5
+                        in 11..viewModel.getTotalQuestionCount() -> score.value += 5
                         else -> score.value += 1
                     }
 
