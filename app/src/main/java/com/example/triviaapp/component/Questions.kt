@@ -102,7 +102,6 @@ fun Questions(viewModel: QuestionsViewModel) {
                             questionIndex.intValue++
                         } else {
                             isGameOver.value = true
-                            //TODO: Ask ai how to make so the app wont allow screen turn
                         }
 
                     },
